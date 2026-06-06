@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel — Global Currency Converter</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="navbar">
+    <a href="index.html" class="nav-brand">
+        <span class="logo-icon">💱</span><span>GlobalFX Admin</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html">Converter</a></li>
+        <li><a href="admin.html" class="active">Admin</a></li>
+    </ul>
+    <div class="nav-actions">
+        <span id="userGreet" style="color:rgba(255,255,255,0.85);font-size:0.88rem;"></span>
+        <button class="btn btn-danger btn-sm" id="logoutBtn" style="display:none" onclick="logout()">Logout</button>
+        <button class="dark-toggle" id="darkToggle">🌙</button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content">
+
+    <div class="page-header">
+        <div>
+            <h1>⚙️ Admin Panel</h1>
+            <p class="text-muted">Manage currencies, users, and view conversion reports</p>
+        </div>
+        <div style="background:#fee2e2;color:#b91c1c;padding:0.4rem 1rem;border-radius:99px;font-size:0.82rem;font-weight:600;">
+            🔐 Admin Access Only
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.8rem;border-bottom:2px solid var(--border);padding-bottom:0.5rem;">
+        <button class="tab-btn active" onclick="showTab('tabCurrencies')" id="btnCurrencies">💰 Currencies</button>
+        <button class="tab-btn" onclick="showTab('tabUsers')"      id="btnUsers">👥 Users</button>
+        <button class="tab-btn" onclick="showTab('tabReports')"    id="btnReports">📊 Reports</button>
+        <button class="tab-btn" onclick="showTab('tabStats')"      id="btnStats">📈 Dashboard</button>
+    </div>
+
+    <!-- ================================================
+         TAB: Currencies
+         ================================================ -->
+    <div id="tabCurrencies" class="tab-content">
+
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.5rem;align-items:start;">
+
+            <!-- Currency Table -->
+            <div class="card">
+                <div class="page-header" style="margin-bottom:1rem;">
+                    <h3 class="card-title" style="margin:0;">All Currencies</h3>
+                    <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Currency</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="currencyTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Rate (USD)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currencyTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add / Edit Currency Form -->
+            <div class="card">
+                <h3 class="card-title">➕ Add New Currency</h3>
+                <form id="addCurrencyForm" novalidate>
+                    <div class="form-group">
+                        <label for="currencyCode">Currency Code (e.g. USD)</label>
+                        <input type="text" id="currencyCode" placeholder="e.g. BTC" maxlength="5" style="text-transform:uppercase;" />
+                    </div>
+                    <div class="form-group">
+                        <label for="currencyName">Currency Name</label>
+                        <input type="text" id="currencyName" placeholder="e.g. Bitcoin" />
+                    </div>
+                    <div class="form-group">
+                        <label for="exchangeRate">Exchange Rate (vs USD)</label>
+                        <input type="number" id="exchangeRate" placeholder="e.g. 65000" step="any" min="0.000001" />
+                    </div>
+                    <button type="submit" class="btn btn-success btn-full">✅ Add Currency</button>
+                </form>
+
+                <!-- Update Rate Section -->
+                <hr style="border:none;border-top:1px solid var(--border);margin:1.4rem 0;" />
+                <h3 class="card-title" style="font-size:0.95rem;">🔄 Update Exchange Rate</h3>
+                <div class="form-group">
+                    <label for="updateCode">Select Currency</label>
+                    <select id="updateCode"></select>
+                </div>
+                <div class="form-group">
+                    <label for="updateRate">New Rate</label>
+                    <input type="number" id="updateRate" placeholder="New exchange rate" step="any" min="0.000001" />
+                </div>
+                <button class="btn btn-warning btn-full" style="background:var(--warning);color:#fff;" onclick="updateRate()">
+                    🔄 Update Rate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================
+         TAB: Users
+         ================================================ -->
+    <div id="tabUsers" class="tab-content hidden">
+        <div class="card">
+            <div class="page-header" style="margin-bottom:1rem;">
+                <h3 class="card-title" style="margin:0;">👥 Registered Users</h3>
+                <span id="userCountBadge" class="badge badge-user">0 users</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Last Login</th>
+                            <th>Conversions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================
+         TAB: Reports
+         ================================================ -->
+    <div id="tabReports" class="tab-content hidden">
+        <div class="card">
+            <div class="page-header" style="margin-bottom:1rem;">
+                <h3 class="card-title" style="margin:0;">📊 All Conversion Reports</h3>
+                <button class="btn btn-success btn-sm" onclick="exportToCSV()">📥 Export CSV</button>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="search-bar" style="margin-bottom:1rem;">
+                <select id="reportFilterFrom" style="flex:1;">
+                    <option value="">All (From)</option>
+                </select>
+                <select id="reportFilterTo" style="flex:1;">
+                    <option value="">All (To)</option>
+                </select>
+                <button class="btn btn-primary btn-sm" onclick="filterReports()">🔍 Filter</button>
+                <button class="btn btn-outline btn-sm" onclick="loadReports()">↺ Reset</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Amount</th>
+                            <th>Converted</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================
+         TAB: Stats Dashboard
+         ================================================ -->
+    <div id="tabStats" class="tab-content hidden">
+        <div class="grid-4 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon blue">💰</div>
+                <div class="stat-info"><h3 id="statCurrencies">12</h3><p>Currencies</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">👥</div>
+                <div class="stat-info"><h3 id="statUsers">—</h3><p>Registered Users</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">🔄</div>
+                <div class="stat-info"><h3 id="statConversions">—</h3><p>Total Conversions</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">🏆</div>
+                <div class="stat-info"><h3 id="statTopPair">—</h3><p>Top Currency Pair</p></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">📋 Admin Quick Actions</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:0.8rem;margin-top:0.5rem;">
+                <button class="btn btn-primary" onclick="showTab('tabCurrencies')">💰 Manage Currencies</button>
+                <button class="btn btn-secondary" onclick="showTab('tabUsers')">👥 View All Users</button>
+                <button class="btn btn-success" onclick="showTab('tabReports')">📊 View Reports</button>
+                <button class="btn btn-outline" onclick="exportToCSV()">📥 Export All to CSV</button>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ============================================================
+     ADD CURRENCY MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>➕ Add New Currency</h3>
+            <button class="modal-close" onclick="closeAddModal()">✕</button>
+        </div>
+        <form id="modalCurrencyForm">
+            <div class="form-group">
+                <label for="modalCode">Currency Code</label>
+                <input type="text" id="modalCode" placeholder="e.g. BTC" maxlength="5" style="text-transform:uppercase;" />
+            </div>
+            <div class="form-group">
+                <label for="modalName">Currency Name</label>
+                <input type="text" id="modalName" placeholder="e.g. Bitcoin" />
+            </div>
+            <div class="form-group">
+                <label for="modalRate">Exchange Rate (vs USD)</label>
+                <input type="number" id="modalRate" placeholder="e.g. 65000" step="any" />
+            </div>
+            <div style="display:flex;gap:0.8rem;margin-top:1rem;">
+                <button type="submit" class="btn btn-success" style="flex:1;">✅ Add</button>
+                <button type="button" class="btn btn-outline" onclick="closeAddModal()" style="flex:1;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <h3>💱 Global Currency Converter</h3>
+            <p>A full-stack Java + MySQL project for B.Tech CS students.</p>
+            <div class="footer-tech">
+                <span>Java</span><span>OOP</span><span>JDBC</span>
+                <span>MySQL</span><span>HTML</span><span>CSS</span><span>JavaScript</span>
+            </div>
+            <div class="social-links">
+                <a href="#" title="GitHub">🐙</a>
+                <a href="#" title="LinkedIn">💼</a>
+                <a href="#" title="Twitter">🐦</a>
+                <a href="#" title="Email">📧</a>
+            </div>
+        </div>
+        <div class="footer-links">
+            <h4>Admin Tools</h4>
+            <ul>
+                <li><a href="#" onclick="showTab('tabCurrencies')">💰 Currencies</a></li>
+                <li><a href="#" onclick="showTab('tabUsers')">👥 Users</a></li>
+                <li><a href="#" onclick="showTab('tabReports')">📊 Reports</a></li>
+            </ul>
+        </div>
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="index.html">🏠 Home</a></li>
+                <li><a href="dashboard.html">💱 Converter</a></li>
+                <li><a href="history.html">📊 History</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© <span id="footerYear"></span> Global Currency Converter. All rights reserved.</p>
+        <p class="made-by">Designed &amp; Developed by <span>Rohit Sharma</span></p>
+    </div>
+</footer>
+
+<style>
+/* Tab button styles */
+.tab-btn {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.55rem 1.2rem;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.tab-btn:hover  { border-color: var(--primary); color: var(--primary); }
+.tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+</style>
+
+<script src="js/validation.js"></script>
+<script src="js/app.js"></script>
+<script>
+// -------------------------------------------------------
+// In-memory currency store (mirrors DB for demo)
+// -------------------------------------------------------
+let adminCurrencies = JSON.parse(JSON.stringify(CURRENCIES));
+
+// -------------------------------------------------------
+// Tab switching
+// -------------------------------------------------------
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.remove('hidden');
+
+    const btnMap = {
+        tabCurrencies: 'btnCurrencies',
+        tabUsers:      'btnUsers',
+        tabReports:    'btnReports',
+        tabStats:      'btnStats'
+    };
+    document.getElementById(btnMap[tabId])?.classList.add('active');
+
+    // Load data for the tab
+    if (tabId === 'tabUsers')   loadUsers();
+    if (tabId === 'tabReports') loadReports();
+    if (tabId === 'tabStats')   loadStats();
+}
+
+// -------------------------------------------------------
+// Load Currencies
+// -------------------------------------------------------
+function loadCurrencies() {
+    const tbody     = document.getElementById('currencyTableBody');
+    const updateSel = document.getElementById('updateCode');
+
+    tbody.innerHTML = adminCurrencies.map(c => `
+        <tr>
+            <td><strong>${c.flag || ''} ${c.code}</strong></td>
+            <td>${c.name}</td>
+            <td>${c.rate}</td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteCurrency('${c.code}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+
+    // Populate update dropdown
+    updateSel.innerHTML = adminCurrencies.map(c =>
+        `<option value="${c.code}">${c.flag || ''} ${c.code} — ${c.name}</option>`
+    ).join('');
+}
+
+// -------------------------------------------------------
+// Add Currency
+// -------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+    loadCurrencies();
+
+    // Form in sidebar
+    document.getElementById('addCurrencyForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!validateCurrencyForm()) return;
+
+        const code = document.getElementById('currencyCode').value.trim().toUpperCase();
+        const name = document.getElementById('currencyName').value.trim();
+        const rate = parseFloat(document.getElementById('exchangeRate').value);
+
+        addCurrencyToList(code, name, rate);
+        this.reset();
+    });
+
+    // Modal form
+    document.getElementById('modalCurrencyForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const code = document.getElementById('modalCode').value.trim().toUpperCase();
+        const name = document.getElementById('modalName').value.trim();
+        const rate = parseFloat(document.getElementById('modalRate').value);
+
+        if (!code || !name || !rate || rate <= 0) {
+            showToast('Please fill all fields correctly.', 'error');
+            return;
+        }
+        addCurrencyToList(code, name, rate);
+        closeAddModal();
+        this.reset();
+    });
+
+    // Populate report filter dropdowns
+    CURRENCIES.forEach(c => {
+        document.getElementById('reportFilterFrom').add(new Option(`${c.code}`, c.code));
+        document.getElementById('reportFilterTo').add(new Option(`${c.code}`, c.code));
+    });
+});
+
+function addCurrencyToList(code, name, rate) {
+    const existing = adminCurrencies.find(c => c.code === code);
+    if (existing) {
+        showToast(`Currency ${code} already exists.`, 'error');
+        return;
+    }
+    adminCurrencies.push({ code, name, rate, flag: '💱' });
+    loadCurrencies();
+    showToast(`Currency ${code} added successfully!`, 'success');
+}
+
+// -------------------------------------------------------
+// Delete Currency
+// -------------------------------------------------------
+function deleteCurrency(code) {
+    if (!confirm(`Delete currency ${code}? This cannot be undone.`)) return;
+    adminCurrencies = adminCurrencies.filter(c => c.code !== code);
+    loadCurrencies();
+    showToast(`Currency ${code} deleted.`, 'info');
+}
+
+// -------------------------------------------------------
+// Update Rate
+// -------------------------------------------------------
+function updateRate() {
+    const code    = document.getElementById('updateCode').value;
+    const newRate = parseFloat(document.getElementById('updateRate').value);
+
+    if (!newRate || newRate <= 0) {
+        showToast('Please enter a valid rate.', 'error');
+        return;
+    }
+
+    const curr = adminCurrencies.find(c => c.code === code);
+    if (curr) {
+        curr.rate = newRate;
+        loadCurrencies();
+        document.getElementById('updateRate').value = '';
+        showToast(`Rate for ${code} updated to ${newRate}.`, 'success');
+    }
+}
+
+// -------------------------------------------------------
+// Load Users
+// -------------------------------------------------------
+function loadUsers() {
+    // Demo user data
+    const demoUsers = [
+        { id: 1, name: 'Admin',        email: 'admin@currency.com', role: 'admin', lastLogin: '2026-06-06 10:00' },
+        { id: 2, name: 'Rohit Sharma', email: 'rohit@test.com',     role: 'user',  lastLogin: '2026-06-06 09:45' },
+    ];
+
+    // Also include any registered users from localStorage
+    const stored = localStorage.getItem('registeredUsers');
+    const localUsers = stored ? JSON.parse(stored) : [];
+    const allUsers = [...demoUsers, ...localUsers];
+
+    document.getElementById('userCountBadge').textContent = `${allUsers.length} users`;
+    document.getElementById('statUsers').textContent = allUsers.length;
+
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = allUsers.map((u, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.email}</td>
+            <td><span class="badge badge-${u.role}">${u.role}</span></td>
+            <td style="font-size:0.82rem;color:var(--text-muted);">${u.lastLogin || u.createdAt || '—'}</td>
+            <td>—</td>
+        </tr>
+    `).join('');
+}
+
+// -------------------------------------------------------
+// Load Reports
+// -------------------------------------------------------
+function loadReports() {
+    const allHistory = History.getAll();
+    renderReportTable(allHistory);
+    document.getElementById('statConversions').textContent = allHistory.length;
+}
+
+function renderReportTable(records) {
+    const tbody = document.getElementById('reportsTableBody');
+
+    if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No conversion records found.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = records.map((h, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${h.userName || 'User'}</td>
+            <td><span class="badge badge-user">${h.fromCurrency}</span></td>
+            <td><span class="badge badge-active">${h.toCurrency}</span></td>
+            <td>${parseFloat(h.amount).toLocaleString()}</td>
+            <td><strong>${parseFloat(h.convertedAmount).toLocaleString()}</strong></td>
+            <td style="font-size:0.82rem;color:var(--text-muted);">${h.date || '—'}</td>
+        </tr>
+    `).join('');
+}
+
+function filterReports() {
+    const from = document.getElementById('reportFilterFrom').value;
+    const to   = document.getElementById('reportFilterTo').value;
+    let records = History.getAll();
+    if (from) records = records.filter(h => h.fromCurrency === from);
+    if (to)   records = records.filter(h => h.toCurrency   === to);
+    renderReportTable(records);
+    showToast(`${records.length} record(s) found.`, 'info', 2000);
+}
+
+// -------------------------------------------------------
+// Load Stats
+// -------------------------------------------------------
+function loadStats() {
+    const allHistory = History.getAll();
+    document.getElementById('statConversions').textContent = allHistory.length;
+    document.getElementById('statCurrencies').textContent  = adminCurrencies.length;
+
+    if (allHistory.length > 0) {
+        const pairCount = {};
+        allHistory.forEach(h => {
+            const key = `${h.fromCurrency}→${h.toCurrency}`;
+            pairCount[key] = (pairCount[key] || 0) + 1;
+        });
+        const topPair = Object.keys(pairCount).sort((a,b) => pairCount[b]-pairCount[a])[0];
+        document.getElementById('statTopPair').textContent = topPair || '—';
+    }
+}
+
+// -------------------------------------------------------
+// Modal helpers
+// -------------------------------------------------------
+function openAddModal()  { document.getElementById('addModal').classList.add('show'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('show'); }
+
+// Close modal on overlay click
+document.getElementById('addModal').addEventListener('click', function (e) {
+    if (e.target === this) closeAddModal();
+});
+</script>
+</body>
+</html>
