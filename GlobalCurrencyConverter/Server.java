@@ -8,26 +8,9 @@ import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Server.java
- * -----------
- * Zero-dependency HTTP file server using Java's built-in HttpServer.
- * Serves the web/ folder on http://localhost:5500
- *
- * Run:  java Server.java
- * Open: http://localhost:5500
- *
- * Author: Rohit Sharma
- */
 public class Server {
-
-    // Port to serve on
     static final int PORT = 5500;
-
-    // Root folder to serve (relative to where you run the command)
     static final String WEB_ROOT = "web";
-
-    // MIME types map
     static final Map<String, String> MIME = new HashMap<>();
     static {
         MIME.put("html", "text/html; charset=UTF-8");
@@ -42,8 +25,6 @@ public class Server {
     }
 
     public static void main(String[] args) throws Exception {
-
-        // Resolve absolute path of web root
         Path root = Path.of(WEB_ROOT).toAbsolutePath();
 
         if (!Files.exists(root)) {
@@ -55,25 +36,17 @@ public class Server {
         // Create HTTP server bound to all interfaces on PORT
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
-        // Handle ALL requests with our FileHandler
         server.createContext("/", exchange -> {
             String path = exchange.getRequestURI().getPath();
 
-            // Default to index.html
             if (path.equals("/") || path.isEmpty()) {
                 path = "/index.html";
             }
-
-            // Build full file path (prevent directory traversal)
             Path filePath = root.resolve(path.substring(1)).normalize();
-
-            // Security: reject paths that escape web root
             if (!filePath.startsWith(root)) {
                 send(exchange, 403, "text/plain", "403 Forbidden".getBytes());
                 return;
             }
-
-            // If it's a directory, try index.html inside it
             if (Files.isDirectory(filePath)) {
                 filePath = filePath.resolve("index.html");
             }
@@ -84,13 +57,12 @@ public class Server {
                 String mime    = MIME.getOrDefault(ext, "application/octet-stream");
                 send(exchange, 200, mime, content);
             } else {
-                // 404
                 String msg = "404 Not Found: " + path;
                 send(exchange, 404, "text/plain", msg.getBytes());
             }
         });
 
-        server.setExecutor(null); // default executor
+        server.setExecutor(null); 
         server.start();
 
         System.out.println();
