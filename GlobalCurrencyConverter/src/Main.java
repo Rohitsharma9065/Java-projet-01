@@ -1,47 +1,57 @@
-import java.util.Scanner;
+import java.util.*;
 
-class CurrencyConverter {
-
-    public void convert() {
-
+public class CurrencyConverter {
+    private double amount;
+    private String fromCurrency;
+    private String toCurrency;
+    private double result;
+    public void getInput() {
         Scanner sc = new Scanner(System.in);
-
+        System.out.println("===== Global Currency Converter =====");
         System.out.print("Enter Amount: ");
-        double amount = sc.nextDouble();
-
-        System.out.print("From Currency (USD/INR/EUR): ");
-        String from = sc.next().toUpperCase();
-
-        System.out.print("To Currency (USD/INR/EUR): ");
-        String to = sc.next().toUpperCase();
-
+        amount = sc.nextDouble();
+        System.out.print("Enter From Currency (USD/INR/EUR/GBP): ");
+        fromCurrency = sc.next().toUpperCase();
+        System.out.print("Enter To Currency (USD/INR/EUR/GBP): ");
+        toCurrency = sc.next().toUpperCase();
+    }
+    public void convertCurrency() {
         double usd = 0;
-        double result = 0;
-
-        // Convert to USD
-        if (from.equals("USD"))
+        if (fromCurrency.equals("USD")) {
             usd = amount;
-        else if (from.equals("INR"))
+        } else if (fromCurrency.equals("INR")) {
             usd = amount / 83;
-        else if (from.equals("EUR"))
+        } else if (fromCurrency.equals("EUR")) {
             usd = amount / 0.92;
-        else {
-            System.out.println("Invalid Currency");
+        } else if (fromCurrency.equals("GBP")) {
+            usd = amount / 0.79;
+        } else {
+            System.out.println("Invalid Source Currency");
             return;
         }
-
-        // Convert from USD to target currency
-        if (to.equals("USD"))
+        if (toCurrency.equals("USD")) {
             result = usd;
-        else if (to.equals("INR"))
+        } else if (toCurrency.equals("INR")) {
             result = usd * 83;
-        else if (to.equals("EUR"))
+        } else if (toCurrency.equals("EUR")) {
             result = usd * 0.92;
-        else {
-            System.out.println("Invalid Currency");
+        } else if (toCurrency.equals("GBP")) {
+            result = usd * 0.79;
+        } else {
+            System.out.println("Invalid Target Currency");
             return;
         }
-
-        System.out.println("Converted Amount = " + result + " " + to);
+        displayResult();
+    }
+    public void displayResult() {
+        System.out.println();
+        System.out.println("Converted Amount: " + result + " " + toCurrency);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        CurrencyConverter converter = new CurrencyConverter();
+        converter.getInput();
+        converter.convertCurrency();
     }
 }
